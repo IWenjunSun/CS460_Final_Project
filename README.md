@@ -1,28 +1,30 @@
 # CS460_Final_Project
 
-#Passing any antivirus-VAC-anti cheating-memory encryption:::
+
+
+# Passing any antivirus-VAC-anti cheating-memory encryption:::
 
 
 
 
 
-#Game memory read/write:::
+# Game memory read/write:::
 
 
 
 
-#Game function injection/hook:::
-
-
-
-
-
-#Functions:
-##AIMBOT C++: https://www.youtube.com/watch?v=RpnFoSIlw8s
+# Game function injection/hook:::
 
 
 
 
 
-#Basic:
-##change game memory: https://www.youtube.com/watch?v=v_T05F1Tppw
+# Functions:
+## AIMBOT C++: https://www.youtube.com/watch?v=RpnFoSIlw8s
+
+
+
+
+
+# Basic:
+## change game memory: https://www.youtube.com/watch?v=v_T05F1Tppw
