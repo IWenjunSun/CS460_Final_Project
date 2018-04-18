@@ -40,12 +40,6 @@ HMODULE GetBaseAddressByName(DWORD processId, TCHAR *processName){
 }
 
 int main() {
-
-
-
-
-
-
 	HWND hwnd = FindWindowA(NULL, "Counter-Strike Source");
 	if (hwnd == NULL) {
 		cout << "Cannot find window" << endl;
@@ -71,9 +65,9 @@ int main() {
 			int num_players;
 			float x_rot, y_rot;
 			float player_x, player_y, player_z;
+			float target_x, target_y, target_z;
 			//get number of players, excluding self
 			ReadProcessMemory(handle, (LPVOID)(engine_offset + 0x77BB94), &num_players, sizeof(num_players), 0);
-			num_players--;
 			//main aimbot while loop
 			while (1) {
 				//get player rotation
@@ -84,7 +78,13 @@ int main() {
 				ReadProcessMemory(handle, (LPVOID)(player_addr + player_x_off), &player_x, sizeof(player_x), 0);
 				ReadProcessMemory(handle, (LPVOID)(player_addr + player_y_off), &player_y, sizeof(player_y), 0);
 				ReadProcessMemory(handle, (LPVOID)(player_addr + player_z_off), &player_z, sizeof(player_z), 0);
-
+				//get the enemy that is closest to user
+				for (int i = 1; i < num_players; i++) {
+					ReadProcessMemory(handle, (LPVOID)(server_offset + player_offset + 0x10*i), &player_addr, sizeof(player_addr), 0);
+					ReadProcessMemory(handle, (LPVOID)(player_addr + player_x_off), &target_x, sizeof(target_x), 0);
+					ReadProcessMemory(handle, (LPVOID)(player_addr + player_y_off), &target_y, sizeof(target_y), 0);
+					ReadProcessMemory(handle, (LPVOID)(player_addr + player_z_off), &target_z, sizeof(target_z), 0);
+				}
 				/*for (float i = -89; i < 90; i++) {
 					WriteProcessMemory(handle, (LPVOID)(engine_offset + y_rot_off), &i, sizeof(i), 0);
 					Sleep(10);
