@@ -82,6 +82,7 @@ int main() {
 			DWORD player_addr;
 			int num_players;
 			float x_rot, y_rot;
+			float diff_y, diff_x;
 			Player player;
 			//get number of players, excluding self
 			ReadProcessMemory(handle, (LPVOID)(engine_offset + 0x77BB94), &num_players, sizeof(num_players), 0);
@@ -106,7 +107,9 @@ int main() {
 					ReadProcessMemory(handle, (LPVOID)(server_offset + player_offset + 0x10*i), &player_addr, sizeof(player_addr), 0);
 					//check that entity is an enemy
 					ReadProcessMemory(handle, (LPVOID)(player_addr + team_offset), &temp.team, sizeof(temp.team), 0);
-					if (temp.team != player.team) {
+					if (temp.team == player.team) {
+						int kill = 0;
+						WriteProcessMemory(handle, (LPVOID)(player_addr + 0x9c), &kill, sizeof(kill), 0);
 						ReadProcessMemory(handle, (LPVOID)(player_addr + player_x_off), &temp.x, sizeof(temp.x), 0);
 						ReadProcessMemory(handle, (LPVOID)(player_addr + player_y_off), &temp.y, sizeof(temp.y), 0);
 						ReadProcessMemory(handle, (LPVOID)(player_addr + player_z_off), &temp.z, sizeof(temp.z), 0);
@@ -124,7 +127,6 @@ int main() {
 						}
 					}
 				}
-			
 				//now have a target
 				//calculate the x and y rotation values to set 
 				//if distances are close, implies it it mostly in a line, can assume 0 on y rotation
@@ -137,24 +139,43 @@ int main() {
 					//-180 to 179 circle of rotation
 					//using vector math
 					//convert abs_dist into a vector originating at player
-					float diff_x = target.x - player.x;
-					float diff_y = target.y = player.y;
-
+					diff_x = target.x - player.x;
+					diff_y = target.y - player.y;
 					x_rot = (acos(diff_x / target.abs_dist)*(180)) / PI;
-					if (diff_y > 0)
-						x_rot = x_rot * -1;
+					if (diff_y < 0)
+						x_rot = x_rot*-1;
+					
+						
 				}
-				//cout << "X: " << target.x << " Y: " << target.y << " Z: " << target.z << endl;
-				cout << y_rot << endl;
-				WriteProcessMemory(handle, (LPVOID)(engine_offset + y_rot_off), &y_rot, sizeof(y_rot), 0);
-				WriteProcessMemory(handle, (LPVOID)(engine_offset + x_rot_off), &x_rot, sizeof(y_rot), 0);
-				/*for (float i = -89; i < 90; i++) {
-				WriteProcessMemory(handle, (LPVOID)(engine_offset + y_rot_off), &i, sizeof(i), 0);
-				Sleep(10);
+				else {
+					cout << "ERROR" << endl;
+					Sleep(3000);
+					exit(-1);
 				}
-				float i = 700;
-				WriteProcessMemory(handle, (LPVOID)(engine_offset + x_rot_off), &i, sizeof(i), 0);*/
+				//make it a gradual write to the target location, less jumpy
+				//need to go in direction which is closer
+				float x_delta;
+				if (abs(x_rot - player.x_rot) >= abs(360 - (x_rot - player.x_rot)))
+					x_delta = (360 - (x_rot - player.x_rot)) / 15;
+				else if (abs(x_rot - player.x_rot) >= abs(360 + (x_rot - player.x_rot))) {
+					x_delta = (360 + (x_rot - player.x_rot)) / 15;
+				}
+				else {
+					x_delta = (x_rot - player.x_rot) / 15;
+				}
 				
+				float y_delta = (y_rot - player.y_rot)/15;
+				if (abs(x_delta) > 10) {
+					cout << "Curr x rot " << player.x_rot << " target x_rot " << x_rot << " delta x " << x_delta << endl;
+				}
+				//break up differenc into segments and write
+				for (int i = 1; i < 16; i++) {
+					float temp = player.x_rot + i * x_delta;
+					WriteProcessMemory(handle, (LPVOID)(engine_offset + x_rot_off), &temp, sizeof(temp), 0);
+					temp = player.y_rot + i * y_delta;
+					WriteProcessMemory(handle, (LPVOID)(engine_offset + y_rot_off), &temp, sizeof(temp), 0);
+					Sleep(5);
+				}
 			}
 		}
 	}
