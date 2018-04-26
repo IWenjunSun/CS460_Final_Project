@@ -18,9 +18,9 @@ const DWORD entity_diff = 0x10;
 const DWORD player_x_off = 0x348;
 const DWORD player_y_off = 0x34C;
 const DWORD player_z_off = 0x350;
-const float ground_to_head = 51;
+const float ground_to_head = 50;
 const float ground_to_gun = 50;
-const float gun_to_head = 1;
+const float gun_to_head = 0;
 
 struct Player {
 	float x, y, z;
@@ -109,11 +109,11 @@ int main() {
 					ReadProcessMemory(handle, (LPVOID)(player_addr + team_offset), &temp.team, sizeof(temp.team), 0);
 
 					//DEBUG PURPOSE
-					int kill = 0;
-					WriteProcessMemory(handle, (LPVOID)(player_addr + 0x9c), &kill, sizeof(kill), 0);
+					/*int kill = 0;
+					WriteProcessMemory(handle, (LPVOID)(player_addr + 0x9c), &kill, sizeof(kill), 0);*/
 					//DEBUG
 					//team for testing purpose
-					if (temp.team == player.team) {
+					if (temp.team != player.team) {
 						ReadProcessMemory(handle, (LPVOID)(player_addr + player_x_off), &temp.x, sizeof(temp.x), 0);
 						ReadProcessMemory(handle, (LPVOID)(player_addr + player_y_off), &temp.y, sizeof(temp.y), 0);
 						ReadProcessMemory(handle, (LPVOID)(player_addr + player_z_off), &temp.z, sizeof(temp.z), 0);
@@ -138,18 +138,16 @@ int main() {
 					//use trig to get y's angle
 					y_rot = (acos(target.dist / target.abs_dist)*(180))/PI;
 					if (target.below)
-						y_rot = y_rot * -1;
+						y_rot = y_rot*-1;
 					//x rot is a bit harder
 					//-180 to 179 circle of rotation
 					//using vector math
 					//convert abs_dist into a vector originating at player
 					diff_x = target.x - player.x;
 					diff_y = target.y - player.y;
-					x_rot = (acos(diff_x / target.abs_dist)*(180)) / PI;
+					x_rot = (acos(diff_x / target.dist)*(180)) / PI;
 					if (diff_y < 0)
 						x_rot = x_rot*-1;
-					if (diff_y > 0)
-						cout << "HERE" << endl;
 						
 				}
 				else {
@@ -159,7 +157,7 @@ int main() {
 				}
 				//make it a gradual write to the target location, less jumpy
 				//need to go in direction which is closer
-				float x_delta = (x_rot - player.x_rot);
+				/*float x_delta = (x_rot - player.x_rot);
 				if (abs(x_delta) > abs(360 - (x_rot - player.x_rot)))
 					x_delta = -(360 - (x_rot - player.x_rot));
 				else if (abs(x_delta) > abs(360 + (x_rot - player.x_rot))) 
@@ -179,7 +177,10 @@ int main() {
 					temp = player.y_rot + i * y_delta;
 					WriteProcessMemory(handle, (LPVOID)(engine_offset + y_rot_off), &temp, sizeof(temp), 0);
 					Sleep(2);
-				}
+				}*/
+				WriteProcessMemory(handle, (LPVOID)(engine_offset + x_rot_off), &x_rot, sizeof(x_rot), 0);
+				WriteProcessMemory(handle, (LPVOID)(engine_offset + y_rot_off), &y_rot, sizeof(y_rot), 0);
+				Sleep(2);
 			}
 		}
 	}
