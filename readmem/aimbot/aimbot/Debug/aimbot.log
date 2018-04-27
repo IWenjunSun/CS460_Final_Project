@@ -1,0 +1,9 @@
+﻿  main.cpp
+c:\users\jacob\desktop\cs460\finalproject\aimbot\aimbot\main.cpp(11): warning C4005: 'PSAPI_VERSION': macro redefinition
+  c:\program files (x86)\windows kits\10\include\10.0.16299.0\um\psapi.h(56): note: see previous definition of 'PSAPI_VERSION'
+c:\users\jacob\desktop\cs460\finalproject\aimbot\aimbot\main.cpp(111): warning C4305: '=': truncation from 'int' to 'float'
+c:\users\jacob\desktop\cs460\finalproject\aimbot\aimbot\main.cpp(156): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\jacob\desktop\cs460\finalproject\aimbot\aimbot\main.cpp(165): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\jacob\desktop\cs460\finalproject\aimbot\aimbot\main.cpp(73): warning C4101: 'buff': unreferenced local variable
+c:\users\jacob\desktop\cs460\finalproject\aimbot\aimbot\main.cpp(100): warning C4101: 'e': unreferenced local variable
+  aimbot.vcxproj -> C:\Users\Jacob\Desktop\CS460\finalproject\aimbot\Debug\aimbot.exe
