@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <math.h>
 #include <algorithm>
-#include "SDL.h"
 #define SDL_MAIN_HANDLED
 #pragma comment(lib, "psapi.lib")
 #define PSAPI_VERSION 1
@@ -16,7 +15,7 @@ const DWORD player_offset = 0x3D24D4;
 const DWORD team_offset = 0x22C;
 const DWORD x_rot_off = 0x326EC0;
 const DWORD y_rot_off = 0x326EBC;
-const DWORD crouch_off = 0x118;//62 is standing, 45 is crouched
+const DWORD crouch_offset = 0x36C;
 const DWORD entity_diff = 0x10;
 const DWORD player_x_off = 0x348;
 const DWORD player_y_off = 0x34C;
@@ -82,7 +81,7 @@ int main(int argc, char* argv[]) {
 			HMODULE addr = GetBaseAddressByName(procID, (TCHAR*)"hl2.exe");
 			DWORD engine_offset = (DWORD)addr + 0x1FC00000;
 			DWORD server_offset = (DWORD)addr + 0x21C00000;
-			DWORD player_addr;
+			DWORD player_addr, user_addr;
 			int num_players;
 			float x_rot, y_rot;
 			float diff_y, diff_x;
@@ -90,22 +89,29 @@ int main(int argc, char* argv[]) {
 			//get number of players, excluding self
 			ReadProcessMemory(handle, (LPVOID)(engine_offset + 0x77BB94), &num_players, sizeof(num_players), 0);
 			//get team user is on
-			ReadProcessMemory(handle, (LPVOID)(server_offset + player_offset), &player_addr, sizeof(player_addr), 0);
-			ReadProcessMemory(handle, (LPVOID)(player_addr + team_offset), &player.team, sizeof(player.team), 0);
-			if (SDL_Init(SDL_INIT_VIDEO) < 0)
-			{	
-				printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
-			}
-			//main aimbot while loop
-			SDL_Event e;
+			ReadProcessMemory(handle, (LPVOID)(server_offset + player_offset), &user_addr, sizeof(user_addr), 0);
+			ReadProcessMemory(handle, (LPVOID)(user_addr + team_offset), &player.team, sizeof(player.team), 0);
 			int toggle = 1;
+			bool hold = false;
 			while (1) {
-				cout << (int)GetAsyncKeyState(17) << endl;
-				if (GetAsyncKeyState(1)) {
+				if (GetAsyncKeyState(0x56) && !hold) {
 					toggle = (toggle + 1) % 2;
+					hold = true;
 				}
-				
+				else if (hold && !GetAsyncKeyState(0x56))
+					hold = false;
 				if (toggle) {
+					float crouch;
+					float crouch_diff = 0;
+					float target_crouch_diff = 0;
+					//god mode disabled
+					/*int hpp = 100;
+					WriteProcessMemory(handle, (LPVOID)(user_addr + 0x9c), &hpp, sizeof(hpp), 0);*/
+					//get crouch
+					ReadProcessMemory(handle, (LPVOID)(user_addr + crouch_offset), &crouch, sizeof(crouch), 0);
+					if ((int)crouch < 50) {
+						crouch_diff = 53.5 - crouch;
+					}
 					Enemy target;
 					Enemy temp;
 					target.abs_dist = INT_MAX;
@@ -134,11 +140,16 @@ int main(int argc, char* argv[]) {
 							ReadProcessMemory(handle, (LPVOID)(player_addr + player_x_off), &temp.x, sizeof(temp.x), 0);
 							ReadProcessMemory(handle, (LPVOID)(player_addr + player_y_off), &temp.y, sizeof(temp.y), 0);
 							ReadProcessMemory(handle, (LPVOID)(player_addr + player_z_off), &temp.z, sizeof(temp.z), 0);
+							//find out if enemy is crouched
+							ReadProcessMemory(handle, (LPVOID)(player_addr + crouch_offset), &crouch, sizeof(crouch), 0);
+							if ((int)crouch < 50) {
+								target_crouch_diff = 53.5 - crouch;
+							}
 							//absolute distance is distance from player's gun to enemies head
 							temp.number = i;
-							temp.abs_dist = sqrt((temp.x - player.x)*(temp.x - player.x) + (temp.y - player.y)*(temp.y - player.y) + (temp.z - player.z + gun_to_head)*(temp.z - player.z + gun_to_head));
+							temp.abs_dist = sqrt((temp.x - player.x)*(temp.x - player.x) + (temp.y - player.y)*(temp.y - player.y) + (temp.z - player.z + gun_to_head + crouch_diff - target_crouch_diff)*(temp.z - player.z + gun_to_head + crouch_diff - target_crouch_diff));
 							temp.dist = sqrt((temp.x - player.x)*(temp.x - player.x) + (temp.y - player.y)*(temp.y - player.y));
-							if (player.z + ground_to_gun > temp.z + ground_to_head)
+							if (player.z + ground_to_gun - crouch_diff > temp.z + ground_to_head - target_crouch_diff)
 								temp.below = false;
 							else
 								temp.below = true;
@@ -176,6 +187,5 @@ int main(int argc, char* argv[]) {
 			}
 		}
 	}
-	close();
 	return 0;
 }
